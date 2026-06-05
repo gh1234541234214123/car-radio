@@ -14,23 +14,198 @@ document.addEventListener('DOMContentLoaded', () => {
     const signalBars = document.getElementById('signal-bars');
     const trackTime = document.getElementById('track-time');
     const sourceIndicator = document.getElementById('source-indicator');
+    const userBtn = document.getElementById('user-btn');
+    const authOverlay = document.getElementById('auth-overlay');
+    const authClose = document.getElementById('auth-close');
+    const googleSigninBtn = document.getElementById('google-signin-btn');
+    const signoutBtn = document.getElementById('signout-btn');
+    const authContent = document.getElementById('auth-content');
+    const userContent = document.getElementById('user-content');
+    const userEmail = document.getElementById('user-email');
+    const userAvatar = document.getElementById('user-avatar');
+    const syncStatus = document.getElementById('sync-status');
 
     let stations = [];
     let currentIndex = 0;
     let isCDMode = false;
     let scanInterval = null;
     let presetTimer = null;
+    let user = null;
 
     // Load saved presets from localStorage
-    const savedPresets = JSON.parse(localStorage.getItem('radioPresets') || '{}');
+    let savedPresets = JSON.parse(localStorage.getItem('radioPresets') || '{}');
 
-    // Set initial volume
-    audioPlayer.volume = 0.5;
+    // ============ FIREBASE INIT ============
+    const firebaseConfig = {
+        apiKey: "AIzaSyCP638A6OrGeTEf9fcbmjgtxidpqRpRKOk",
+        authDomain: "escer-b1d45.firebaseapp.com",
+        projectId: "escer-b1d45",
+        storageBucket: "escer-b1d45.firebasestorage.app",
+        messagingSenderId: "210308988596",
+        appId: "1:210308988596:web:a698b5c1ea425e549421e1",
+        measurementId: "G-JR5J8Q621E"
+    };
 
-    // Fetch stations with CORS proxy
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ============ AUTH STATE ============
+    auth.onAuthStateChanged(async (firebaseUser) => {
+        user = firebaseUser;
+        if (user) {
+            userBtn.classList.add('signed-in');
+            userBtn.textContent = '●';
+            userBtn.title = user.displayName || user.email;
+            await syncPresetsFromCloud();
+            updatePresetDisplay();
+        } else {
+            userBtn.classList.remove('signed-in');
+            userBtn.textContent = '👤';
+            userBtn.title = 'Sign in';
+        }
+        updateAuthModal();
+    });
+
+    function updateAuthModal() {
+        if (user) {
+            authContent.style.display = 'none';
+            userContent.style.display = 'block';
+            userEmail.textContent = user.email;
+            userAvatar.src = user.photoURL || '';
+            syncStatus.textContent = '✓ Cloud sync active';
+            syncStatus.style.color = '#4f4';
+        } else {
+            authContent.style.display = 'block';
+            userContent.style.display = 'none';
+        }
+    }
+
+    // ============ FIRESTORE SYNC ============
+    async function syncPresetsFromCloud() {
+        if (!user) return;
+        try {
+            const docRef = db.collection('users').doc(user.uid);
+            const docSnap = await docRef.get();
+            if (docSnap.exists) {
+                const cloudPresets = docSnap.data().presets || {};
+                // Merge: local presets take priority (most recently saved)
+                savedPresets = { ...cloudPresets, ...savedPresets };
+                localStorage.setItem('radioPresets', JSON.stringify(savedPresets));
+            }
+        } catch (err) {
+            console.error('Firestore read error:', err);
+        }
+    }
+
+    async function savePresetsToCloud() {
+        if (!user) return;
+        try {
+            const docRef = db.collection('users').doc(user.uid);
+            await docRef.set({ presets: savedPresets }, { merge: true });
+        } catch (err) {
+            console.error('Firestore write error:', err);
+        }
+    }
+
+    // ============ AUTH UI ============
+    userBtn.addEventListener('click', () => authOverlay.classList.add('open'));
+    authClose.addEventListener('click', () => authOverlay.classList.remove('open'));
+    authOverlay.addEventListener('click', (e) => {
+        if (e.target === authOverlay) authOverlay.classList.remove('open');
+    });
+
+    googleSigninBtn.addEventListener('click', async () => {
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            await auth.signInWithPopup(provider);
+            authOverlay.classList.remove('open');
+        } catch (err) {
+            console.error('Sign-in error:', err);
+        }
+    });
+
+    signoutBtn.addEventListener('click', async () => {
+        await auth.signOut();
+        savedPresets = JSON.parse(localStorage.getItem('radioPresets') || '{}');
+        updatePresetDisplay();
+        authOverlay.classList.remove('open');
+    });
+
+    // ============ SEARCH ============
+    const searchOverlay = document.getElementById('search-overlay');
+    const searchClose = document.getElementById('search-close');
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const searchBtn = document.getElementById('search-btn');
+
+    let searchTimeout = null;
+
+    searchBtn.addEventListener('click', () => {
+        searchOverlay.classList.add('open');
+        searchInput.value = '';
+        searchResults.innerHTML = '<div class="search-hint">Type a station name to search</div>';
+        setTimeout(() => searchInput.focus(), 100);
+    });
+
+    searchClose.addEventListener('click', () => searchOverlay.classList.remove('open'));
+    searchOverlay.addEventListener('click', (e) => {
+        if (e.target === searchOverlay) searchOverlay.classList.remove('open');
+    });
+
+    searchInput.addEventListener('input', () => {
+        const query = searchInput.value.trim();
+        if (searchTimeout) clearTimeout(searchTimeout);
+        if (query.length < 2) {
+            searchResults.innerHTML = '<div class="search-hint">Type at least 2 characters</div>';
+            return;
+        }
+        searchResults.innerHTML = '<div class="search-loading">Searching...</div>';
+        searchTimeout = setTimeout(() => performSearch(query), 400);
+    });
+
+    async function performSearch(query) {
+        try {
+            const url = proxy + encodeURIComponent(
+                `https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}&limit=20`
+            );
+            const res = await fetch(url);
+            const data = await res.json();
+            if (!data.length) {
+                searchResults.innerHTML = '<div class="search-hint">No stations found</div>';
+                return;
+            }
+            searchResults.innerHTML = '';
+            data.forEach((station, i) => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.innerHTML = `
+                    <div class="search-result-name">${station.name}</div>
+                    <div class="search-result-meta">${station.country || 'Unknown'} · ${station.codec || ''} ${station.bitrate || ''}</div>
+                    <div class="assign-hint">Click to play · Long-press a preset to save</div>
+                `;
+                item.addEventListener('click', () => {
+                    // Add to stations list if not already present
+                    const exists = stations.findIndex(s => s.url === station.url);
+                    let idx;
+                    if (exists !== -1) {
+                        idx = exists;
+                    } else {
+                        idx = stations.length;
+                        stations.push(station);
+                    }
+                    currentIndex = idx;
+                    loadStation(idx);
+                    searchOverlay.classList.remove('open');
+                });
+                searchResults.appendChild(item);
+            });
+        } catch (err) {
+            searchResults.innerHTML = '<div class="search-error">Search failed. Try again.</div>';
+        }
+    }
     const proxy = 'https://corsproxy.io/?';
     const apiUrl = 'https://de1.api.radio-browser.info/json/stations?limit=10';
-
     fetch(proxy + encodeURIComponent(apiUrl))
         .then(response => response.json())
         .then(data => {
@@ -41,15 +216,13 @@ document.addEventListener('DOMContentLoaded', () => {
             nowPlaying.textContent = 'NO SIGNAL';
         });
 
-    // ============ FREQ SCAN ANIMATION ============
+    // ============ FREQ SCAN ============
     function startScan(direction, callback) {
         let freq = parseFloat(freqDisplay.textContent) || 87.5;
         const step = direction > 0 ? 0.1 : -0.1;
         const target = direction > 0 ? 108.0 : 87.5;
-
         bandDisplay.textContent = 'SCAN';
         signalBars.className = 'signal-bars none';
-
         if (scanInterval) clearInterval(scanInterval);
         scanInterval = setInterval(() => {
             freq += step;
@@ -70,24 +243,19 @@ document.addEventListener('DOMContentLoaded', () => {
         signalBars.className = 'signal-bars ' + levels[strength];
     }
 
-    // ============ STATION LOADING ============
     function loadStation(index) {
         if (isCDMode) return;
         if (!stations.length) return;
-
         if (scanInterval) {
             clearInterval(scanInterval);
             scanInterval = null;
         }
-
         currentIndex = index;
         const station = stations[index];
         audioPlayer.src = station.url;
         audioPlayer.play();
         nowPlaying.textContent = station.name;
         playPauseBtn.textContent = '⏸';
-
-        // Update display
         sourceIndicator.textContent = 'TUNER';
         bandDisplay.textContent = 'FM';
         const freq = (87.5 + (index * 2.05) % 20).toFixed(1);
@@ -109,9 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
             audioPlayer.pause();
             playPauseBtn.textContent = '▶';
             cdDisc.classList.remove('spinning');
-            if (isCDMode) {
-                cdSlotLed.className = 'cd-slot-led loading';
-            }
+            if (isCDMode) cdSlotLed.className = 'cd-slot-led loading';
         }
     });
 
@@ -127,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startScan(-1, () => loadStation(prev));
     });
 
-    // ============ PRESETS (long-press to save) ============
+    // ============ PRESETS ============
     function updatePresetDisplay() {
         document.querySelectorAll('.preset').forEach(btn => {
             const idx = btn.getAttribute('data-index');
@@ -142,7 +308,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.preset').forEach(btn => {
         const idx = parseInt(btn.getAttribute('data-index'));
 
-        // Short tap: load preset or station
         btn.addEventListener('click', () => {
             if (presetTimer) {
                 clearTimeout(presetTimer);
@@ -150,23 +315,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             if (savedPresets[idx]) {
-                // Load saved preset station
                 if (isCDMode) return;
                 const saved = savedPresets[idx];
                 const found = stations.findIndex(s => s.name === saved.name);
-                if (found !== -1) {
-                    loadStation(found);
-                }
+                if (found !== -1) loadStation(found);
             } else if (stations[idx]) {
-                // Load by index if no saved station
                 loadStation(idx);
             }
         });
 
-        // Long press: save current station to this preset
         let pressTimer = null;
         btn.addEventListener('mousedown', () => {
-            pressTimer = setTimeout(() => {
+            pressTimer = setTimeout(async () => {
                 if (isCDMode) return;
                 if (!stations[currentIndex]) return;
                 savedPresets[idx] = {
@@ -174,6 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     index: currentIndex
                 };
                 localStorage.setItem('radioPresets', JSON.stringify(savedPresets));
+                await savePresetsToCloud();
                 updatePresetDisplay();
                 nowPlaying.textContent = `SAVED: ${stations[currentIndex].name}`;
                 setTimeout(() => {
@@ -184,17 +345,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         btn.addEventListener('mouseup', () => {
-            if (pressTimer) {
-                clearTimeout(pressTimer);
-                pressTimer = null;
-            }
+            if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
         });
-
         btn.addEventListener('mouseleave', () => {
-            if (pressTimer) {
-                clearTimeout(pressTimer);
-                pressTimer = null;
-            }
+            if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
         });
     });
 
@@ -246,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ============ CD PLAYER ============
+    // ============ CD ============
     cdInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -267,7 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Eject CD
     document.querySelector('.cd-btn').addEventListener('click', (e) => {
         if (cdInput.files.length > 0 || isCDMode) {
             audioPlayer.pause();
@@ -284,18 +437,13 @@ document.addEventListener('DOMContentLoaded', () => {
             bandDisplay.textContent = 'FM';
             freqDisplay.textContent = '87.5';
             trackTime.textContent = '0:00';
-            if (stations[currentIndex]) {
-                loadStation(currentIndex);
-            }
+            if (stations[currentIndex]) loadStation(currentIndex);
         }
     });
 
-    // ============ KEYBOARD SHORTCUTS ============
+    // ============ KEYBOARD ============
     document.addEventListener('keydown', (e) => {
-        if (e.key === ' ') {
-            e.preventDefault();
-            playPauseBtn.click();
-        }
+        if (e.key === ' ') { e.preventDefault(); playPauseBtn.click(); }
         if (e.key === 'ArrowRight') nextBtn.click();
         if (e.key === 'ArrowLeft') prevBtn.click();
         if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {

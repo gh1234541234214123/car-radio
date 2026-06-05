@@ -18,6 +18,7 @@ body {
     border-radius: 20px;
     border: 3px solid #444;
     box-shadow: inset 0 0 15px rgba(0,0,0,0.6), 0 15px 30px rgba(0,0,0,0.5);
+    position: relative;
 }
 
 /* ============ CD TRAY (TOP) ============ */
@@ -169,8 +170,139 @@ body {
 .screen-bottom {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     font-size: 0.65rem;
     color: #666;
+}
+
+.user-btn {
+    background: none;
+    border: 1px solid #444;
+    color: #888;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 0.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: border-color 0.3s, color 0.3s;
+}
+
+.user-btn:hover {
+    border-color: #ff9900;
+    color: #ff9900;
+}
+
+.user-btn.signed-in {
+    border-color: #4f4;
+    color: #4f4;
+}
+
+/* ============ AUTH MODAL ============ */
+.auth-overlay {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    border-radius: 17px;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-overlay.open {
+    display: flex;
+}
+
+.auth-modal {
+    background: #2a2a3e;
+    border: 1px solid #555;
+    border-radius: 10px;
+    padding: 25px;
+    width: 280px;
+    position: relative;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.auth-modal-header {
+    font-size: 0.7rem;
+    color: #ff9900;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+}
+
+.auth-modal p {
+    font-size: 0.75rem;
+    color: #999;
+    margin-bottom: 15px;
+}
+
+.auth-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.google-btn {
+    background: #4285f4;
+    color: #fff;
+}
+
+.google-btn:hover {
+    background: #357ae8;
+}
+
+.signout-btn {
+    background: #555;
+    color: #ddd;
+}
+
+.signout-btn:hover {
+    background: #666;
+}
+
+.auth-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #4f4;
+}
+
+.sync-status {
+    font-size: 0.65rem;
+    color: #4f4;
+    margin-top: 10px;
 }
 
 #track-time {
@@ -251,6 +383,142 @@ body {
 .controls-main .phys-button:not(.play-btn) {
     padding: 12px 18px;
     font-size: 1rem;
+}
+
+.search-btn {
+    font-size: 1rem;
+    padding: 12px 14px;
+}
+
+/* ============ SEARCH MODAL ============ */
+.search-overlay {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    border-radius: 17px;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 40px;
+}
+
+.search-overlay.open {
+    display: flex;
+}
+
+.search-modal {
+    background: #2a2a3e;
+    border: 1px solid #555;
+    border-radius: 10px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.search-modal-header {
+    font-size: 0.7rem;
+    color: #ff9900;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #555;
+    border-radius: 5px;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: inherit;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: #ff9900;
+}
+
+.search-results {
+    margin-top: 10px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.search-hint {
+    font-size: 0.7rem;
+    color: #666;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.search-result-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #333;
+    transition: background 0.2s;
+}
+
+.search-result-item:hover {
+    background: #3a3a4e;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-name {
+    font-size: 0.8rem;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-result-meta {
+    font-size: 0.6rem;
+    color: #888;
+    margin-top: 2px;
+}
+
+.search-result-item .assign-hint {
+    font-size: 0.55rem;
+    color: #ff9900;
+    display: none;
+    margin-top: 2px;
+}
+
+.search-result-item:hover .assign-hint {
+    display: block;
+}
+
+.search-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.search-loading {
+    text-align: center;
+    color: #888;
+    font-size: 0.75rem;
+    padding: 15px 0;
+}
+
+.search-error {
+    text-align: center;
+    color: #f55;
+    font-size: 0.75rem;
+    padding: 15px 0;
 }
 
 /* ============ DECK ============ */

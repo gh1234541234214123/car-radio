@@ -29,10 +29,31 @@
                 <div class="screen-bottom">
                     <span id="track-time">0:00</span>
                     <span id="source-indicator">TUNER</span>
+                    <button id="user-btn" class="user-btn" title="Sign in">👤</button>
                 </div>
             </div>
         </header>
         
+        <!-- Auth Modal -->
+        <div class="auth-overlay" id="auth-overlay">
+            <div class="auth-modal">
+                <div class="auth-modal-header">ACCOUNT</div>
+                <div id="auth-content">
+                    <p>Sign in to sync presets to the cloud.</p>
+                    <button id="google-signin-btn" class="auth-btn google-btn">Sign in with Google</button>
+                </div>
+                <div id="user-content" style="display:none">
+                    <div class="user-info">
+                        <img id="user-avatar" class="user-avatar" src="" alt="">
+                        <span id="user-email"></span>
+                    </div>
+                    <button id="signout-btn" class="auth-btn signout-btn">Sign Out</button>
+                    <div class="sync-status" id="sync-status">✓ Cloud sync active</div>
+                </div>
+                <button class="auth-close" id="auth-close">✕</button>
+            </div>
+        </div>
+
         <div class="presets-container">
             <button class="phys-button preset" data-index="0">1</button>
             <button class="phys-button preset" data-index="1">2</button>
@@ -44,8 +65,21 @@
 
         <div class="controls-main">
             <button id="prev-btn" class="phys-button">◀◀</button>
+            <button id="search-btn" class="phys-button search-btn">🔍</button>
             <button id="play-pause-btn" class="phys-button play-btn">▶</button>
             <button id="next-btn" class="phys-button">▶▶</button>
+        </div>
+
+        <!-- Search Modal -->
+        <div class="search-overlay" id="search-overlay">
+            <div class="search-modal">
+                <div class="search-modal-header">STATION SEARCH</div>
+                <input type="text" id="search-input" class="search-input" placeholder="Search station name..." autofocus>
+                <div class="search-results" id="search-results">
+                    <div class="search-hint">Type a station name to search</div>
+                </div>
+                <button class="auth-close search-close" id="search-close">✕</button>
+            </div>
         </div>
 
         <div class="deck-container">
@@ -65,6 +99,11 @@
         
         <audio id="audio-player"></audio>
     </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
