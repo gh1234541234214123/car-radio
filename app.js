@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const volumeKnob = document.getElementById('volume-knob');
     const cdInput = document.getElementById('cd-input');
     const cdDisc = document.getElementById('cd-disc');
+    const cdSlotDisc = document.getElementById('cd-slot-disc');
+    const cdSlotLed = document.getElementById('cd-slot-led');
     const freqDisplay = document.getElementById('freq-display');
     const bandDisplay = document.getElementById('band-display');
     const signalBars = document.getElementById('signal-bars');
@@ -101,11 +103,15 @@ document.addEventListener('DOMContentLoaded', () => {
             playPauseBtn.textContent = '⏸';
             if (isCDMode) {
                 cdDisc.classList.add('spinning');
+                cdSlotLed.className = 'cd-slot-led active';
             }
         } else {
             audioPlayer.pause();
             playPauseBtn.textContent = '▶';
             cdDisc.classList.remove('spinning');
+            if (isCDMode) {
+                cdSlotLed.className = 'cd-slot-led loading';
+            }
         }
     });
 
@@ -249,6 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
             audioPlayer.play();
             cdDisc.classList.remove('empty');
             cdDisc.classList.add('spinning');
+            cdSlotDisc.classList.add('loaded');
+            cdSlotLed.className = 'cd-slot-led active';
             nowPlaying.textContent = `CD: ${file.name}`;
             playPauseBtn.textContent = '⏸';
             sourceIndicator.textContent = 'CD';
@@ -262,20 +270,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Eject CD
     document.querySelector('.cd-btn').addEventListener('click', (e) => {
         if (cdInput.files.length > 0 || isCDMode) {
-            // Eject
             audioPlayer.pause();
             audioPlayer.src = '';
             cdInput.value = '';
             isCDMode = false;
             cdDisc.classList.add('empty');
             cdDisc.classList.remove('spinning');
+            cdSlotDisc.classList.remove('loaded');
+            cdSlotLed.className = 'cd-slot-led';
             nowPlaying.textContent = 'NO DISC';
             playPauseBtn.textContent = '▶';
             sourceIndicator.textContent = 'TUNER';
             bandDisplay.textContent = 'FM';
             freqDisplay.textContent = '87.5';
             trackTime.textContent = '0:00';
-            // Resume tuner
             if (stations[currentIndex]) {
                 loadStation(currentIndex);
             }
