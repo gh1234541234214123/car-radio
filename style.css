@@ -521,6 +521,183 @@ body {
     padding: 15px 0;
 }
 
+/* ============ SEARCH PRESET BIND ============ */
+.search-preset-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.bind-label {
+    font-size: 0.5rem;
+    color: #666;
+    letter-spacing: 1px;
+    margin-right: 4px;
+}
+
+.preset-bind-btn {
+    width: 26px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid #555;
+    background: #2a2a3a;
+    color: #aaa;
+    font-size: 0.55rem;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.preset-bind-btn:hover {
+    background: #3a3a4e;
+    border-color: #ff9900;
+    color: #fff;
+}
+
+/* ============ AC / CLIMATE ============ */
+.climate-section {
+    margin-top: 12px;
+    padding: 10px 15px;
+    background: #1a1a2e;
+    border-radius: 10px;
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.climate-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.climate-temp-display {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #66d9ff;
+    text-shadow: 0 0 6px rgba(102,217,255,0.3);
+    letter-spacing: 1px;
+    min-width: 70px;
+}
+
+.climate-temp-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.climate-temp-btn {
+    background: #2a2a3a;
+    border: 1px solid #444;
+    color: #aaa;
+    width: 28px;
+    height: 22px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 2px #111;
+    transition: transform 0.08s, box-shadow 0.08s;
+}
+
+.climate-temp-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 #111;
+}
+
+.climate-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.climate-ac-btn {
+    padding: 6px 12px;
+    font-size: 0.6rem;
+    background: #2a2a3a;
+    border: 1px solid #444;
+    border-radius: 5px;
+    color: #aaa;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 1px;
+    box-shadow: 0 2px #111;
+    transition: transform 0.08s, box-shadow 0.08s;
+}
+
+.climate-ac-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 #111;
+}
+
+.climate-ac-btn.on {
+    background: #1a3a2a;
+    border-color: #4f4;
+    color: #4f4;
+    box-shadow: 0 2px #111, 0 0 6px rgba(0,255,0,0.2);
+}
+
+.climate-fan {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.55rem;
+    color: #666;
+}
+
+.climate-fan-indicator {
+    display: flex;
+    gap: 3px;
+}
+
+.climate-fan-indicator span {
+    width: 4px;
+    height: 12px;
+    background: #333;
+    border-radius: 1px;
+    transition: background 0.3s;
+}
+
+.climate-fan-indicator span.on {
+    background: #ff9900;
+}
+
+.climate-fan-btn {
+    background: #2a2a3a;
+    border: 1px solid #444;
+    color: #aaa;
+    width: 22px;
+    height: 18px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.55rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 2px #111;
+    transition: transform 0.08s, box-shadow 0.08s;
+}
+
+.climate-fan-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 #111;
+}
+
+.climate-label {
+    font-size: 0.5rem;
+    color: #555;
+    letter-spacing: 1px;
+    text-align: center;
+    margin-bottom: 6px;
+}
+
 /* ============ DECK ============ */
 .deck-container {
     display: flex;

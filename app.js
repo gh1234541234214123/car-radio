@@ -224,12 +224,11 @@ document.addEventListener('DOMContentLoaded', () => {
             unique.forEach(station => {
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
-                item.innerHTML = `
-                    <div class="search-result-name">${station.name}</div>
-                    <div class="search-result-meta">${station.country || 'Unknown'} · ${station.codec || ''} ${station.bitrate || ''}</div>
-                    <div class="assign-hint">Click to play · Long-press a preset to save</div>
-                `;
-                item.addEventListener('click', () => {
+
+                const name = document.createElement('div');
+                name.className = 'search-result-name';
+                name.textContent = station.name;
+                name.addEventListener('click', () => {
                     const exists = stations.findIndex(s => s.url === station.url);
                     let idx;
                     if (exists !== -1) {
@@ -242,6 +241,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     loadStation(idx);
                     searchOverlay.classList.remove('open');
                 });
+                item.appendChild(name);
+
+                const meta = document.createElement('div');
+                meta.className = 'search-result-meta';
+                meta.textContent = `${station.country || 'Unknown'} · ${station.codec || ''} ${station.bitrate || ''}`;
+                item.appendChild(meta);
+
+                // Preset bind buttons
+                const presetRow = document.createElement('div');
+                presetRow.className = 'search-preset-row';
+                presetRow.innerHTML = '<span class="bind-label">BIND:</span>';
+                for (let p = 0; p < 6; p++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'preset-bind-btn';
+                    const saved = savedPresets[p];
+                    btn.textContent = saved ? `${p + 1}✓` : `${p + 1}`;
+                    btn.title = saved ? `Replace: ${saved.name}` : `Bind to preset ${p + 1}`;
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        savedPresets[p] = {
+                            name: station.name,
+                            index: stations.length
+                        };
+                        localStorage.setItem('radioPresets', JSON.stringify(savedPresets));
+                        savePresetsToCloud();
+                        updatePresetDisplay();
+                        // Add to stations if not present
+                        const exists = stations.findIndex(s => s.url === station.url);
+                        if (exists === -1) stations.push(station);
+                        // Flash feedback
+                        const orig = btn.textContent;
+                        btn.textContent = `${p + 1}✓`;
+                        btn.style.borderColor = '#4f4';
+                        setTimeout(() => {
+                            btn.style.borderColor = '';
+                            btn.textContent = savedPresets[p] ? `${p + 1}✓` : `${p + 1}`;
+                            btn.title = savedPresets[p] ? `Replace: ${savedPresets[p].name}` : `Bind to preset ${p + 1}`;
+                        }, 800);
+                    });
+                    presetRow.appendChild(btn);
+                }
+                item.appendChild(presetRow);
+
                 searchResults.appendChild(item);
             });
         } catch (err) {
@@ -254,12 +296,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 localResults.forEach(station => {
                     const item = document.createElement('div');
                     item.className = 'search-result-item';
-                    item.innerHTML = `
-                        <div class="search-result-name">${station.name}</div>
-                        <div class="search-result-meta">Spain · radio.es</div>
-                        <div class="assign-hint">Click to play · Long-press a preset to save</div>
-                    `;
-                    item.addEventListener('click', () => {
+                    const name = document.createElement('div');
+                    name.className = 'search-result-name';
+                    name.textContent = station.name;
+                    name.addEventListener('click', () => {
                         const exists = stations.findIndex(s => s.url === station.url);
                         let idx;
                         if (exists !== -1) {
@@ -272,6 +312,40 @@ document.addEventListener('DOMContentLoaded', () => {
                         loadStation(idx);
                         searchOverlay.classList.remove('open');
                     });
+                    item.appendChild(name);
+                    const meta = document.createElement('div');
+                    meta.className = 'search-result-meta';
+                    meta.textContent = 'Spain · radio.es';
+                    item.appendChild(meta);
+                    // Preset bind buttons
+                    const presetRow = document.createElement('div');
+                    presetRow.className = 'search-preset-row';
+                    presetRow.innerHTML = '<span class="bind-label">BIND:</span>';
+                    for (let p = 0; p < 6; p++) {
+                        const btn = document.createElement('button');
+                        btn.className = 'preset-bind-btn';
+                        const saved = savedPresets[p];
+                        btn.textContent = saved ? `${p + 1}✓` : `${p + 1}`;
+                        btn.title = saved ? `Replace: ${saved.name}` : `Bind to preset ${p + 1}`;
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            savedPresets[p] = { name: station.name, index: stations.length };
+                            localStorage.setItem('radioPresets', JSON.stringify(savedPresets));
+                            savePresetsToCloud();
+                            updatePresetDisplay();
+                            const exists = stations.findIndex(s => s.url === station.url);
+                            if (exists === -1) stations.push(station);
+                            btn.textContent = `${p + 1}✓`;
+                            btn.style.borderColor = '#4f4';
+                            setTimeout(() => {
+                                btn.style.borderColor = '';
+                                btn.textContent = savedPresets[p] ? `${p + 1}✓` : `${p + 1}`;
+                                btn.title = savedPresets[p] ? `Replace: ${savedPresets[p].name}` : `Bind to preset ${p + 1}`;
+                            }, 800);
+                        });
+                        presetRow.appendChild(btn);
+                    }
+                    item.appendChild(presetRow);
                     searchResults.appendChild(item);
                 });
             } else {
@@ -544,4 +618,43 @@ document.addEventListener('DOMContentLoaded', () => {
             updateVolumeFromAngle(currentAngle);
         }
     });
+
+    // ============ AC / CLIMATE ============
+    let climateTemp = 22;
+    let acOn = false;
+    let fanSpeed = 2;
+
+    const climateTempDisplay = document.getElementById('climate-temp');
+    const climateAcBtn = document.getElementById('climate-ac-btn');
+    const climateTempUp = document.getElementById('climate-temp-up');
+    const climateTempDown = document.getElementById('climate-temp-down');
+    const fanUp = document.getElementById('fan-up');
+    const fanDown = document.getElementById('fan-down');
+    const fanIndicator = document.getElementById('fan-indicator');
+
+    function updateClimateDisplay() {
+        climateTempDisplay.textContent = `${climateTemp}°C`;
+        climateAcBtn.classList.toggle('on', acOn);
+        const spans = fanIndicator.querySelectorAll('span');
+        spans.forEach((span, i) => span.classList.toggle('on', i < fanSpeed));
+    }
+
+    climateTempUp.addEventListener('click', () => {
+        if (climateTemp < 30) { climateTemp++; updateClimateDisplay(); }
+    });
+    climateTempDown.addEventListener('click', () => {
+        if (climateTemp > 16) { climateTemp--; updateClimateDisplay(); }
+    });
+    climateAcBtn.addEventListener('click', () => {
+        acOn = !acOn;
+        updateClimateDisplay();
+    });
+    fanUp.addEventListener('click', () => {
+        if (fanSpeed < 4) { fanSpeed++; updateClimateDisplay(); }
+    });
+    fanDown.addEventListener('click', () => {
+        if (fanSpeed > 0) { fanSpeed--; updateClimateDisplay(); }
+    });
+
+    updateClimateDisplay();
 });
