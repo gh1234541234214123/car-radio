@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Radio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="radio-container">
+        <header>
+            <div class="screen">
+                <div class="status-label">NOW PLAYING</div>
+                <h2 id="now-playing">NO SIGNAL</h2>
+            </div>
+        </header>
+        
+        <div class="presets-container">
+            <button class="phys-button preset" data-index="0">1</button>
+            <button class="phys-button preset" data-index="1">2</button>
+            <button class="phys-button preset" data-index="2">3</button>
+            <button class="phys-button preset" data-index="3">4</button>
+            <button class="phys-button preset" data-index="4">5</button>
+            <button class="phys-button preset" data-index="5">6</button>
+        </div>
+
+        <div class="controls-main">
+            <button id="prev-btn" class="phys-button">◀ PREV</button>
+            <button id="play-pause-btn" class="phys-button">PLAY/PAUSE</button>
+            <button id="next-btn" class="phys-button">NEXT ▶</button>
+        </div>
+
+        <div class="deck-container">
+            <div class="volume-container">
+                <div id="volume-knob" class="knob"></div>
+                <label>VOLUME</label>
+            </div>
+            
+            <div class="cd-container">
+                <input type="file" id="cd-input" accept="audio/*">
+                <label for="cd-input" class="phys-button">LOAD CD</label>
+            </div>
+        </div>
+        
+        <audio id="audio-player"></audio>
+        
+        <div class="station-list-container">
+            <ul id="station-list">
+                <!-- Stations will be populated here -->
+            </ul>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
