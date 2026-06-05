@@ -141,6 +141,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let searchTimeout = null;
 
+    const popularStations = [
+        { name: 'Los 40 Principales España', url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40_SC' },
+        { name: 'Cadena SER', url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/CADENASER_SC' },
+        { name: 'COPE Madrid', url: 'https://cope.stream.flumotion.com/cope/copelow.mp4' },
+        { name: 'Onda Cero Madrid', url: 'https://livefast.ondacero.stream/ondacero/ondefm/main/playlist.m3u8' },
+        { name: 'RNE Radio 1', url: 'https://radio1.rtveradio.cires21.com/radio1/radio1/master_00.m3u8' },
+        { name: 'RNE Radio 3', url: 'https://radio3.rtveradio.cires21.com/radio3/radio3/master_00.m3u8' },
+        { name: 'Cadena 100', url: 'https://cadena100.stream.flumotion.com/cadena100/cadena100-low.mp4' },
+        { name: 'Rock FM', url: 'https://rockfm-cope.flumotion.com/rockfm/rockfm-low.mp4' },
+        { name: 'Kiss FM', url: 'https://kissfm.kissfmradio.cires21.com/kissfm/kissfm/master_00.m3u8' },
+        { name: 'Flaix FM', url: 'https://flaixbarcelona.streaming-pro.com:8051/flaixbarcelona.mp3' },
+        { name: 'Radio Marca', url: 'https://radiomarca.stream.flumotion.com/radiomarca/radiomarca-low.mp4' },
+        { name: 'Los 40 Classic', url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40_CLASSIC_SC' },
+        { name: 'Cadena Dial', url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/CADENADIAL_SC' },
+        { name: 'Europa FM', url: 'https://europafm.player.latv.com/stream' },
+        { name: 'Maxima FM', url: 'https://maximafm.player.latv.com/stream' }
+    ];
+
     searchBtn.addEventListener('click', () => {
         searchOverlay.classList.add('open');
         searchInput.value = '';
@@ -166,17 +184,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function performSearch(query) {
         try {
-            const url = proxy + encodeURIComponent(
-                `https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}&limit=20`
+            // Radio Browser API — search by name
+            const response = await fetch(proxy + encodeURIComponent(
+                `https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}&limit=30`
+            ), {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+
+            // Also search radio.es stations locally
+            const localResults = popularStations.filter(s =>
+                s.name.toLowerCase().includes(query.toLowerCase())
             );
-            const res = await fetch(url);
-            const data = await res.json();
-            if (!data.length) {
+
+            const allResults = [...data, ...localResults.map(s => ({
+                name: s.name,
+                url: s.url,
+                country: 'Spain',
+                codec: '',
+                bitrate: ''
+            }))];
+
+            // Deduplicate by URL
+            const seen = new Set();
+            const unique = allResults.filter(s => {
+                const key = s.url;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+
+            if (!unique.length) {
                 searchResults.innerHTML = '<div class="search-hint">No stations found</div>';
                 return;
             }
+
             searchResults.innerHTML = '';
-            data.forEach((station, i) => {
+            unique.forEach(station => {
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
                 item.innerHTML = `
@@ -185,7 +230,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="assign-hint">Click to play · Long-press a preset to save</div>
                 `;
                 item.addEventListener('click', () => {
-                    // Add to stations list if not already present
                     const exists = stations.findIndex(s => s.url === station.url);
                     let idx;
                     if (exists !== -1) {
@@ -201,19 +245,64 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchResults.appendChild(item);
             });
         } catch (err) {
-            searchResults.innerHTML = '<div class="search-error">Search failed. Try again.</div>';
+            // Fallback: search only local radio.es stations
+            const localResults = popularStations.filter(s =>
+                s.name.toLowerCase().includes(query.toLowerCase())
+            );
+            if (localResults.length) {
+                searchResults.innerHTML = '';
+                localResults.forEach(station => {
+                    const item = document.createElement('div');
+                    item.className = 'search-result-item';
+                    item.innerHTML = `
+                        <div class="search-result-name">${station.name}</div>
+                        <div class="search-result-meta">Spain · radio.es</div>
+                        <div class="assign-hint">Click to play · Long-press a preset to save</div>
+                    `;
+                    item.addEventListener('click', () => {
+                        const exists = stations.findIndex(s => s.url === station.url);
+                        let idx;
+                        if (exists !== -1) {
+                            idx = exists;
+                        } else {
+                            idx = stations.length;
+                            stations.push(station);
+                        }
+                        currentIndex = idx;
+                        loadStation(idx);
+                        searchOverlay.classList.remove('open');
+                    });
+                    searchResults.appendChild(item);
+                });
+            } else {
+                searchResults.innerHTML = '<div class="search-error">Search failed. Try again.</div>';
+            }
         }
     }
     const proxy = 'https://corsproxy.io/?';
     const apiUrl = 'https://de1.api.radio-browser.info/json/stations?limit=10';
-    fetch(proxy + encodeURIComponent(apiUrl))
+    fetch(proxy + encodeURIComponent(apiUrl), {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    })
         .then(response => response.json())
         .then(data => {
-            stations = data;
+            // Merge popular radio.es stations with API results
+            stations = [...data, ...popularStations];
+            // Deduplicate by URL
+            const seen = new Set();
+            stations = stations.filter(s => {
+                const key = s.url;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
             loadStation(0);
         })
         .catch(() => {
-            nowPlaying.textContent = 'NO SIGNAL';
+            // Fallback: use only popular stations
+            stations = [...popularStations];
+            loadStation(0);
         });
 
     // ============ FREQ SCAN ============
