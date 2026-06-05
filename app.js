@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const stationList = document.getElementById('station-list');
     const audioPlayer = document.getElementById('audio-player');
     const nowPlaying = document.getElementById('now-playing');
     const playPauseBtn = document.getElementById('play-pause-btn');
@@ -22,19 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             stations = data;
-            renderStations();
         })
         .catch(err => console.error('Error fetching stations:', err));
-
-    function renderStations() {
-        stationList.innerHTML = '';
-        stations.forEach((station, index) => {
-            const li = document.createElement('li');
-            li.textContent = station.name;
-            li.addEventListener('click', () => loadStation(index));
-            stationList.appendChild(li);
-        });
-    }
 
     function loadStation(index) {
         currentIndex = index;

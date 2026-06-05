@@ -10,8 +10,19 @@
     <div class="radio-container">
         <header>
             <div class="screen">
+                <div class="screen-top">
+                    <span id="band-display">FM</span>
+                    <span id="freq-display">87.5</span>
+                    <div class="signal-bars" id="signal-bars">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
                 <div class="status-label">NOW PLAYING</div>
                 <h2 id="now-playing">NO SIGNAL</h2>
+                <div class="screen-bottom">
+                    <span id="track-time">0:00</span>
+                    <span id="source-indicator">TUNER</span>
+                </div>
             </div>
         </header>
         
@@ -25,30 +36,27 @@
         </div>
 
         <div class="controls-main">
-            <button id="prev-btn" class="phys-button">◀ PREV</button>
-            <button id="play-pause-btn" class="phys-button">PLAY/PAUSE</button>
-            <button id="next-btn" class="phys-button">NEXT ▶</button>
+            <button id="prev-btn" class="phys-button">◀◀</button>
+            <button id="play-pause-btn" class="phys-button play-btn">▶</button>
+            <button id="next-btn" class="phys-button">▶▶</button>
         </div>
 
         <div class="deck-container">
             <div class="volume-container">
                 <div id="volume-knob" class="knob"></div>
-                <label>VOLUME</label>
+                <label>VOL</label>
             </div>
             
-            <div class="cd-container">
+            <div class="cd-deck" id="cd-deck">
+                <div class="cd-disc" id="cd-disc">
+                    <div class="cd-label">CD</div>
+                </div>
                 <input type="file" id="cd-input" accept="audio/*">
-                <label for="cd-input" class="phys-button">LOAD CD</label>
+                <label for="cd-input" class="phys-button cd-btn">EJECT / LOAD</label>
             </div>
         </div>
         
         <audio id="audio-player"></audio>
-        
-        <div class="station-list-container">
-            <ul id="station-list">
-                <!-- Stations will be populated here -->
-            </ul>
-        </div>
     </div>
     <script src="app.js"></script>
 </body>
